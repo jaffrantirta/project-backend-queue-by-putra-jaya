@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Shop;
 use App\Models\Shop_user;
+use App\Models\Verify_user;
 use App\Util\ResponseJson;
 use Validator;
 use App\Mail\Email;
@@ -47,7 +48,6 @@ class ShopController extends Controller
             'shop_address' => 'required',
             'shop_phone' => 'required|numeric|digits:12',
             'shop_email' => 'required|email',
-            'user_role_id' => 'required',
             'user_name' => 'required',
             'email' => 'required|email|unique:users',
             'user_phone' => 'required|numeric|digits:12',
@@ -81,7 +81,7 @@ class ShopController extends Controller
 
             $password = rand(10000000,99999999);
             $user = new User();
-            $user->role_id = $request->user_role_id;
+            $user->role_id = 1;
             $user->name = $request->user_name;
             $user->email = $request->email;
             $user->phone = $request->user_phone;
@@ -94,6 +94,12 @@ class ShopController extends Controller
             $shop_user->shop_id = $shop_id;
             $shop_user->save();
 
+            $token = sha1(time());
+            $verify_user = new Verify_user();
+            $verify_user->user_id = $user_id;
+            $verify_user->token = $token;
+            $verify_user->save();
+
             $config = array(
                 'user_name'=>$request->user_name,
                 'email'=>$request->email,
@@ -105,7 +111,7 @@ class ShopController extends Controller
                 'opening'=>'Hai, '.$config['user_name'].' Terimakasi sudah melalukan registrasi silahkan login pada link berikut https://franweb.my.id dan gunakan kridensial berikut :',
                 'content'=>'email : '.$config['email'].' password : '.$config['password'],
                 'closing'=>'sebelum login mohon lakukan aktivasi terlebih dahulu dengan link berikut ',
-                'closing_content'=>'https://franweb.my.id',
+                'closing_content'=>url('u/verify', $token),
                 'email'=>$config['email'],
                 'name'=>$config['user_name']
             );
@@ -177,25 +183,27 @@ class ShopController extends Controller
     }
     public function send_email()
     {
-        $config = array(
-            'user_name'=>'Jaffran',
-            'email'=>'franartika@gmail.com',
-            'password'=>'9090909',
-        );
+        // $config = array(
+        //     'user_name'=>'Jaffran',
+        //     'email'=>'franartika@gmail.com',
+        //     'password'=>'9090909',
+        // );
 
-        $data = array(
-            'title'=>'Registrasi Berhasil ',
-            'opening'=>'Hai, '.$config['user_name'].' Terimakasi sudah melalukan registrasi silahkan login pada link berikut https://franweb.my.id dan gunakan kridensial berikut :',
-            'content'=>'email : '.$config['email'].' password : '.$config['password'],
-            'closing'=>'sebelum login mohon lakukan aktivasi terlebih dahulu dengan link berikut ',
-            'closing_content'=>'https://franweb.my.id',
-            'email'=>$config['email'],
-            'name'=>$config['user_name']
-        );
-        Mail::send('email_template', ['mail' => $data], function ($m) use ($data) {
-            $m->from('drivebali2016@gmail.com', 'POS');
-            $m->to($data['email'], $data['name'])->subject('Registrasi Sukses');
-        });
-        return "Email telah dikirim oke";
+        // $data = array(
+        //     'title'=>'Registrasi Berhasil ',
+        //     'opening'=>'Hai, '.$config['user_name'].' Terimakasi sudah melalukan registrasi silahkan login pada link berikut https://franweb.my.id dan gunakan kridensial berikut :',
+        //     'content'=>'email : '.$config['email'].' password : '.$config['password'],
+        //     'closing'=>'sebelum login mohon lakukan aktivasi terlebih dahulu dengan link berikut ',
+        //     'closing_content'=>'https://franweb.my.id',
+        //     'email'=>$config['email'],
+        //     'name'=>$config['user_name']
+        // );
+        // Mail::send('email_template', ['mail' => $data], function ($m) use ($data) {
+        //     $m->from('drivebali2016@gmail.com', 'POS');
+        //     $m->to($data['email'], $data['name'])->subject('Registrasi Sukses');
+        // });
+        
+        return url('user/verify', 'kjbjhgbjgphp');
     }
+    
 }

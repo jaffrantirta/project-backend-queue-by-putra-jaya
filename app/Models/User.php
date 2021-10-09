@@ -12,13 +12,25 @@ use Illuminate\Notifications\Notifiable;
 class User extends Authenticatable
 {
     use HasFactory, HasApiTokens, Notifiable;
+    public function verify_user()
+    {
+        return $this->belongsTo(Verify_user::class, 'user_id', 'id');
+    }
+    public function role()
+    {
+        return $this->hasOne(Role::class, 'id', 'role_id');
+    }
+    public function shop_user()
+    {
+        return $this->belongsTo(Shop_user::class, 'user_id', 'id');
+    }
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password',
+        'name', 'email', 'password', 'role_id', 'is_active'
     ];
 
     /**
@@ -27,7 +39,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
     ];
 
     /**
@@ -36,6 +48,6 @@ class User extends Authenticatable
      * @var array
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        
     ];
 }

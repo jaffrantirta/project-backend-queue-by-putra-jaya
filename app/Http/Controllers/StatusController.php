@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Status;
 use Illuminate\Http\Request;
+use App\Util\ResponseJson;
+use App\Util\Checker;
+use Illuminate\Support\Facades\Auth;
+use Yajra\Datatables\Datatables;
 
 class StatusController extends Controller
 {
@@ -14,7 +18,7 @@ class StatusController extends Controller
      */
     public function index()
     {
-        //
+        return Datatables::of(Product::all())->make(true);
     }
 
     /**
@@ -35,7 +39,25 @@ class StatusController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = Auth::user();
+        $check = Checker::valid($request, array('name' => 'required'));
+        if($check==null){
+            $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
+            $status = new Status();
+            $status->name = $request->name;
+            $status->description = $request->description;
+            $status->shop_id = $shop[0]->shop_id;
+            $status->save();
+
+            $data = array(
+                'indonesia' => 'Status Dibuat',
+                'english' => 'Status Created',
+                'data' => null,
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else{
+            return response()->json(ResponseJson::response($check), 401);
+        }
     }
 
     /**

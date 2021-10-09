@@ -5,15 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Shop_user extends Model
+class Verify_user extends Model
 {
     use HasFactory;
+    /**
+     * Get the user that owns the Verify_user
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function user()
     {
         return $this->hasOne(User::class, 'id', 'user_id');
-    }
-    public function shop()
-    {
-        return $this->hasOne(Shop::class, 'id', 'shop_id');
     }
 }

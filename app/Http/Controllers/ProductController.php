@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Util\ResponseJson;
+use App\Util\Checker;
+use Illuminate\Support\Facades\Auth;
+use Yajra\Datatables\Datatables;
 
 class ProductController extends Controller
 {
@@ -14,7 +18,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        //
+        return Datatables::of(Product::all())->make(true);
     }
 
     /**
@@ -35,7 +39,24 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = Auth::user();
+        $check = Checker::valid($request, array('name' => 'required', 'group_product_id'=>'required|numeric', 'price'=>'required|numeric'));
+        if($check==null){
+            $product = new Product();
+            $product->name = $request->name;
+            $product->group_product_id = $request->group_product_id;
+            $product->price = $request->price;
+            $product->save();
+
+            $data = array(
+                'indonesia' => 'Produk Ditambahkan',
+                'english' => 'Product Added',
+                'data' => null,
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else{
+            return response()->json(ResponseJson::response($check), 401);
+        }
     }
 
     /**
@@ -67,9 +88,15 @@ class ProductController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Product $product)
+    public function update(Request $request, $id)
     {
-        //
+        $update = Product::find($id)->update($request->all()); 
+        $data = array(
+            'indonesia' => 'Produk Berhasil Diperbaharui',
+            'english' => 'Product Updated',
+            'data' => null,
+        );
+        return response()->json(ResponseJson::response($data), 200);
     }
 
     /**
@@ -78,8 +105,14 @@ class ProductController extends Controller
      * @param  \App\Models\Product  $product
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Product $product)
+    public function destroy($id)
     {
-        //
+        $delete = Product::find($id)->delete(); 
+        $data = array(
+            'indonesia' => 'Produk Dihapus',
+            'english' => 'Product Deleted',
+            'data' => null,
+        );
+        return response()->json(ResponseJson::response($data), 200);
     }
 }

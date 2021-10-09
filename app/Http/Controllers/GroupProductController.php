@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Group_product;
+use App\Models\Shop_user;
 use Illuminate\Http\Request;
+use App\Util\ResponseJson;
+use App\Util\Checker;
+use Illuminate\Support\Facades\Auth;
+use Yajra\Datatables\Datatables;
 
 class GroupProductController extends Controller
 {
@@ -14,7 +19,7 @@ class GroupProductController extends Controller
      */
     public function index()
     {
-        //
+        return Datatables::of(Group_product::all())->make(true);
     }
 
     /**
@@ -35,7 +40,25 @@ class GroupProductController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = Auth::user();
+        $check = Checker::valid($request, array('name' => 'required'));
+        if($check==null){
+            $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
+            $group_product = new Group_product();
+            $group_product->name = $request->name;
+            $group_product->description = $request->description;
+            $group_product->shop_id = $shop[0]->shop_id;
+            $group_product->save();
+
+            $data = array(
+                'indonesia' => 'Grup Dibuat',
+                'english' => 'Group Created',
+                'data' => null,
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else{
+            return response()->json(ResponseJson::response($check), 401);
+        }
     }
 
     /**
@@ -67,9 +90,15 @@ class GroupProductController extends Controller
      * @param  \App\Models\Group_product  $group_product
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Group_product $group_product)
+    public function update(Request $request, $id)
     {
-        //
+        $update = Group_product::find($id)->update($request->all()); 
+        $data = array(
+            'indonesia' => 'Grup Produk Telah Diperbaharui',
+            'english' => 'Group Product Updated',
+            'data' => null,
+        );
+        return response()->json(ResponseJson::response($data), 200);
     }
 
     /**
@@ -78,8 +107,14 @@ class GroupProductController extends Controller
      * @param  \App\Models\Group_product  $group_product
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Group_product $group_product)
+    public function destroy($id)
     {
-        //
+        $delete = Group_product::find($id)->delete(); 
+        $data = array(
+            'indonesia' => 'Grup Dihapus',
+            'english' => 'Group Deleted',
+            'data' => null,
+        );
+        return response()->json(ResponseJson::response($data), 200);
     }
 }
