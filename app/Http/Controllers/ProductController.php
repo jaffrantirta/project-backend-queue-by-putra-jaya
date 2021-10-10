@@ -8,6 +8,7 @@ use App\Util\ResponseJson;
 use App\Util\Checker;
 use Illuminate\Support\Facades\Auth;
 use Yajra\Datatables\Datatables;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -18,7 +19,25 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return Datatables::of(Product::all())->make(true);
+        if(isset($_GET['id'])){
+            $id = $_GET['id'];
+            $data = array(
+                'indonesia' => 'Produk Ditemukan',
+                'english' => 'Product Founded',
+                'data' => Product::find($id)->get(),
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else if(isset($_GET['group'])){
+            $id = $_GET['group'];
+            $data = array(
+                'indonesia' => 'Produk Ditemukan',
+                'english' => 'Product Founded',
+                'data' => DB::table('products')->where('group_product_id', '=', $id)->get(),
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else{
+            return Datatables::of(Product::all())->make(true);
+        }
     }
 
     /**

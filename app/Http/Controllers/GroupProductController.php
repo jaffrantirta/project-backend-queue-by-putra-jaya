@@ -19,7 +19,17 @@ class GroupProductController extends Controller
      */
     public function index()
     {
-        return Datatables::of(Group_product::all())->make(true);
+        if(isset($_GET['id'])){
+            $id = $_GET['id'];
+            $data = array(
+                'indonesia' => 'Grup Ditemukan',
+                'english' => 'Group Founded',
+                'data' => Group_product::find($id)->get(),
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else{
+            return Datatables::of(Group_product::all())->make(true);
+        }
     }
 
     /**
