@@ -12,4 +12,8 @@ class Shop extends Model
     {
         return $this->belongsTo(Shop_user::class, 'shop_id', 'id');
     }
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'shop_id', 'id');
+    }
 }

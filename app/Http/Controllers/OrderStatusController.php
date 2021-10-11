@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order_status;
 use Illuminate\Http\Request;
+use App\Util\StatusUtil;
 
 class OrderStatusController extends Controller
 {
@@ -14,7 +15,7 @@ class OrderStatusController extends Controller
      */
     public function index()
     {
-        //
+        
     }
 
     /**
@@ -35,7 +36,26 @@ class OrderStatusController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $user = Auth::user();
+        $check = Checker::valid($request, array('order_id' => 'required|numeric', 'status_id'=>'required|numeric'));
+        if($check==null){
+            $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
+            $status_id = StatusUtil::sort($shop[0]->shop_id, 2);
+            
+            $order_status = new OrderStatus();
+            $order_status->order_id = $request->order_id;
+            $order_status->status_id = $status_id;
+            $order_status->save();
+
+            $data = array(
+                'indonesia' => 'Status Pesanan Diperbaharui',
+                'english' => 'Order Status Updated',
+                'data' => null,
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else{
+            return response()->json(ResponseJson::response($check), 401);
+        }
     }
 
     /**
@@ -67,9 +87,9 @@ class OrderStatusController extends Controller
      * @param  \App\Models\Order_status  $order_status
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Order_status $order_status)
+    public function update(Request $request, $id)
     {
-        //
+
     }
 
     /**

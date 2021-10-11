@@ -8,6 +8,7 @@ use App\Http\Controllers\GroupProductController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\QueueNumberController;
 use App\Models\Car_type;
 use Yajra\Datatables\Datatables;
 use Illuminate\Http\Request;
@@ -63,8 +64,9 @@ Route::group(['middleware' => 'auth:api'], function(){
     //order
     Route::post('order/check', [OrderController::class, 'check_price']);
     Route::post('order/checkout', [OrderController::class, 'store']);
-    Route::post('order/test', [OrderController::class, 'test']);
-    Route::post('order/update/{id}', [OrderController::class, 'update']);
-    Route::delete('order/delete/{id}', [OrderController::class, 'destroy']);
     Route::get('order',[OrderController::class, 'index']);
+
+    //queue
+    Route::get('queue',[QueueNumberController::class, 'index']);
+    Route::post('queue/call', [QueueNumberController::class, 'call']);
 });
