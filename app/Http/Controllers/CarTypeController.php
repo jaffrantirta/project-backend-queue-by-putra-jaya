@@ -20,7 +20,7 @@ class CarTypeController extends Controller
      */
     public function index()
     {
-        return Datatables::of(Car_type::all())->make(true);
+        return Car_type::latest()->paginate(5);
     }
 
     /**
@@ -42,7 +42,7 @@ class CarTypeController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        $check = Checker::valid($request, array('name' => 'required', 'price' => 'required|numeric'));
+        $check = Checker::valid($request, array('name' => 'required|string', 'price' => 'required|numeric'));
         if($check==null){
             $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
             $car_type = new Car_type();

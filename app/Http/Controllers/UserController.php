@@ -43,8 +43,8 @@ class UserController extends Controller
         else{
             $data = array(
                 'status' => false,
-                'indonesia' => 'Login Gagal',
-                'english' => 'Failed to Login'
+                'indonesia' => 'Email atau Password Salah',
+                'english' => 'Email or Password is Wrong'
             );
             return response()->json(ResponseJson::response($data), 401);
         }
