@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Shop_user;
 use Illuminate\Http\Request;
 use App\Util\ResponseJson;
 use App\Util\Checker;
@@ -19,12 +20,14 @@ class ProductController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
+        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
         if(isset($_GET['id'])){
             $id = $_GET['id'];
             $data = array(
                 'indonesia' => 'Produk Ditemukan',
                 'english' => 'Product Founded',
-                'data' => Product::find($id)->get(),
+                'data' => Product::where('id', $id)->with('group_product')->first(),
             );
             return response()->json(ResponseJson::response($data), 200);
         }else if(isset($_GET['group'])){
@@ -32,11 +35,15 @@ class ProductController extends Controller
             $data = array(
                 'indonesia' => 'Produk Ditemukan',
                 'english' => 'Product Founded',
-                'data' => DB::table('products')->where('group_product_id', '=', $id)->get(),
+                'data' => Product::where('group_product_id', $id)->with('group_product')->get(),
             );
             return response()->json(ResponseJson::response($data), 200);
         }else{
-            return Datatables::of(Product::all())->make(true);
+            return Product::join('group_products', 'group_products.id', '=', 'products.group_product_id')->select('products.*')
+            ->where('group_products.shop_id', $shop->shop_id)
+            ->orderByDesc('products.created_at')
+            ->with('group_product')
+            ->paginate(5);
         }
     }
 

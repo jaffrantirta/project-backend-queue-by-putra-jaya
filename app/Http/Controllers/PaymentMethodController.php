@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Payment_method;
-use Illuminate\Http\Request;
 use App\Models\Shop_user;
+use Illuminate\Http\Request;
 use App\Util\ResponseJson;
 use App\Util\Checker;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +20,19 @@ class PaymentMethodController extends Controller
      */
     public function index()
     {
-        return Datatables::of(Payment_method::all())->make(true);
+        $user = Auth::user();
+        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
+        if(isset($_GET['id'])){
+            $id = $_GET['id'];
+            $data = array(
+                'indonesia' => 'Metode Pembayaran Ditemukan',
+                'english' => 'Payment Method Founded',
+                'data' => Payment_method::find($id),
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else{
+            return Payment_method::where('shop_id', $shop->shop_id)->latest()->paginate(5);
+        }
     }
 
     /**
@@ -100,21 +112,31 @@ class PaymentMethodController extends Controller
     public function update(Request $request, $id)
     {
         $user = Auth::user();
-        $check = Checker::valid($request, array('name'=>'required', 'file' => 'required|mimes:jpg,jpeg,png|max:2048'));
+        $check = Checker::valid($request, array('name'=>'required'));
         $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
         if($check==null){
+             $update = Payment_method::find($id);
+             $old_logo = $update->logo;
             if ($file = $request->file('file')) {
-                $update = Payment_method::find($id);
-                $path = 'files/images/payment_logo/';
-                $name = time().$file->getClientOriginalName();
-                $path_remove = $update->logo;
-    
+                $check = Checker::valid($request, array('file' => 'required|mimes:jpg,jpeg,png|max:2048'));
+                if($check==null){
+                    $path = 'files/images/payment_logo/';
+                    $name = time().$file->getClientOriginalName();
+
+                    $update->update(array(
+                        'name'=>$request->name,
+                        'logo'=>$path.$name,
+                    ));
+                    $file->move($path,$name);
+                }else{
+                    return response()->json(ResponseJson::response($check), 401);
+                }
+            }else{
                 $update->update(array(
                     'name'=>$request->name,
-                    'logo'=>$path.$name,
-                    'shop_id'=>$shop[0]->shop_id
+                    'logo'=>$old_logo,
                 ));
-                $file->move($path,$name);
+            }
                 // unlink(public_path($path_remove));
                 $data = array(
                     'indonesia' => 'Metode Pembayaran Telah Diperbaharui',
@@ -122,7 +144,6 @@ class PaymentMethodController extends Controller
                     'data' => null,
                 );
                 return response()->json(ResponseJson::response($data), 200);
-            }
         }else{
             return response()->json(ResponseJson::response($check), 401);
         }

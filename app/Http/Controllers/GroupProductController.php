@@ -19,16 +19,35 @@ class GroupProductController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
+        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
         if(isset($_GET['id'])){
             $id = $_GET['id'];
             $data = array(
                 'indonesia' => 'Grup Ditemukan',
                 'english' => 'Group Founded',
-                'data' => Group_product::find($id)->get(),
+                'data' => Group_product::find($id),
             );
             return response()->json(ResponseJson::response($data), 200);
+        }elseif(isset($_GET['all'])){
+            $all = $_GET['all'];
+            if($all){
+                $data = array(
+                    'indonesia' => 'Semua Grup',
+                    'english' => 'All Groups',
+                    'data' => Group_product::where('shop_id', $shop->shop_id)->get(),
+                );
+                return response()->json(ResponseJson::response($data), 200);
+            }else{
+                $data = array(
+                    'status' => false,
+                    'indonesia' => 'Rute Tidak Ada',
+                    'english' => 'Route Not Found',
+                );
+                return response()->json(ResponseJson::response($data), 404);
+            }
         }else{
-            return Datatables::of(Group_product::all())->make(true);
+            return Group_product::where('shop_id', $shop->shop_id)->latest()->paginate(5);
         }
     }
 

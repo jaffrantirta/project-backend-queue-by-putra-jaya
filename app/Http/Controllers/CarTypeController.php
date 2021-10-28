@@ -20,7 +20,19 @@ class CarTypeController extends Controller
      */
     public function index()
     {
-        return Car_type::latest()->paginate(5);
+        $user = Auth::user();
+        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
+        if(isset($_GET['id'])){
+            $id = $_GET['id'];
+            $data = array(
+                'indonesia' => 'Tipe Kendaraan Ditemukan',
+                'english' => 'Car Type Founded',
+                'data' => Car_type::find($id),
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else{
+            return Car_type::where('shop_id', $shop->shop_id)->latest()->paginate(5);
+        }
     }
 
     /**
