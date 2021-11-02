@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Group_product;
+use App\Models\Product;
+use App\Models\Car_type;
 use App\Models\Shop_user;
 use Illuminate\Http\Request;
 use App\Util\ResponseJson;

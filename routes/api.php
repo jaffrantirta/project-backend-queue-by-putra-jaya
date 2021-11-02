@@ -65,6 +65,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('order/check', [OrderController::class, 'check_price']);
     Route::post('order/checkout', [OrderController::class, 'store']);
     Route::get('order',[OrderController::class, 'index']);
+    Route::get('order/preload',[OrderController::class, 'order_preload']);
 
     //queue
     Route::get('queue',[QueueNumberController::class, 'index']);

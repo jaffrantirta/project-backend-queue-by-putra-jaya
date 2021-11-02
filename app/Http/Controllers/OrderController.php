@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\Group_product;
+use App\Models\Product;
+use App\Models\Car_type;
 use Illuminate\Http\Request;
 use App\Models\Shop_user;
 use App\Models\Queue_number;
@@ -59,7 +62,7 @@ class OrderController extends Controller
     public function check_price(Request $request)
     {
         $user = Auth::user();
-        $check = Checker::valid($request, array('customer_name' => 'required', 'license_plate'=>'required', 'car_type_id'=>'required|numeric', 'product_id'=>'numeric', 'payment_method_id'=>'required|numeric', 'other_product_price'=>'numeric'));
+        $check = Checker::valid($request, array('customer_name' => 'required', 'license_plate'=>'required', 'car_type_id'=>'required|numeric'));
         if($check==null){
             $count = OrderUtil::counter(array(
                 'car_type_id'=>$request->car_type_id,
@@ -81,7 +84,7 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        $check = Checker::valid($request, array('customer_name' => 'required', 'license_plate'=>'required', 'car_type_id'=>'required|numeric', 'product_id'=>'numeric', 'other_product_price'=>'numeric'));
+        $check = Checker::valid($request, array('customer_name' => 'required', 'license_plate'=>'required', 'car_type_id'=>'required|numeric'));
         if($check==null){
             DB::beginTransaction();
             try {
@@ -97,8 +100,8 @@ class OrderController extends Controller
                 $status = Status::where('shop_id', '=', $shop[0]->shop_id)->where('sort', '=', 1)->get();
                 $order = new Order();
                 $order->order_number = "CW-".time().rand(1000,9999);
-                $order->customer_name = $request->customer_name;
-                $order->license_plate = $request->license_plate;
+                $order->customer_name = ucwords($request->customer_name);
+                $order->license_plate = strtoupper($request->license_plate);
                 $order->car_type_id = $request->car_type_id;
                 $order->product_id = $request->product_id;
                 $order->car_type_name = $count['car_type']->name;
@@ -149,6 +152,9 @@ class OrderController extends Controller
                     'data' => array('error_message'=>$e)
                 );
                 return response()->json(ResponseJson::response($data), 500);
+            } catch (\Throwable $e) {
+                DB::rollback();
+                return $e;
             }
         }else{
             return response()->json(ResponseJson::response($check), 401);
@@ -204,5 +210,25 @@ class OrderController extends Controller
     public function destroy(Order $order)
     {
         //
+    }
+    public function order_preload()
+    {
+        $user = Auth::user();
+        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
+        $groups = Group_product::where('shop_id', $shop->shop_id)->get();
+        $i = 0;
+        foreach($groups as $x){
+            $gp[$i] = $x;
+            $gp[$i]['products'] = Product::where('group_product_id', $x->id)->get();
+            $i++;
+        }
+        $result['group_products'] = $gp;
+        $result['car_types'] = Car_type::where('shop_id', $shop->shop_id)->get();
+        $data = array(
+            'indonesia' => 'Semua Produk Berdasarkan Grup',
+            'english' => 'All Products Order by Group',
+            'data' => $result,
+        );
+        return response()->json(ResponseJson::response($data), 200);
     }
 }

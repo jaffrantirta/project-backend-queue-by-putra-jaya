@@ -9,7 +9,8 @@ class OrderUtil {
         $other_product_name = $x['other_product_name'];
         $other_product_price = $x['other_product_price'];
         if($x['product_id'] == null){
-            $product = null;
+            $product['name'] = '- tidak memilih produk -';
+            $product['price'] = 0;
             $grand_total = $car_type->price + $other_product_price;
         }else{
             $product = Product::find($x['product_id'])->get()[0];
