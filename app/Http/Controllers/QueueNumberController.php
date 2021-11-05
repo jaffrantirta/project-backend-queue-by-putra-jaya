@@ -11,7 +11,7 @@ use Yajra\Datatables\Datatables;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Util\ResponseJson;
-use App\Util\StatusUtil;
+use App\Util\StatusOrder;
 use Carbon\Carbon;
 
 class QueueNumberController extends Controller
@@ -24,7 +24,7 @@ class QueueNumberController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
+        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
         if(isset($_GET['id'])){
             $id = $_GET['id'];
             $queue = Queue_number::with('order')->where('id', $id)->get();
@@ -34,53 +34,31 @@ class QueueNumberController extends Controller
                 'data' => $queue,
             );
             return response()->json(ResponseJson::response($data), 200);
-        }else if(isset($_GET['shop'])){
-            $vShop = $_GET['shop'];
-            if($vShop){
-                $queue = Queue_number::where('is_called', false)->where('shop_id', $shop[0]->shop_id)->whereDate('created_at', Carbon::today())->orderBy('number', 'ASC')->get();
-                $data = array(
-                    'indonesia' => 'Antrian Ditemukan',
-                    'english' => 'Queue(s) Founded',
-                    'data' => $queue,
-                );
-                return response()->json(ResponseJson::response($data), 200);
-            }else{
-                $data = array(
-                    'status' => false,
-                    'indonesia' => 'Antrian Ditemukan',
-                    'english' => 'Queue(s) Founded',
-                );
-                return response()->json(ResponseJson::response($data), 404);
-            }
         }else{
-            $queue = Queue_number::where('is_called', false)->whereDate('created_at', Carbon::today())->orderBy('number', 'ASC')->get();
-            $data = array(
-                'indonesia' => 'Antrian Ditemukan',
-                'english' => 'Queue(s) Founded',
-                'data' => $queue,
-            );
-            return response()->json(ResponseJson::response($data), 200);
+            return Queue_number::where('is_called', false)
+                ->where('queue_numbers.shop_id', $shop->shop_id)
+                ->whereDate('queue_numbers.created_at', Carbon::today())
+                ->orderBy('queue_numbers.created_at', 'ASC')
+                ->join('orders', 'orders.id', '=', 'queue_numbers.order_id')
+                ->select('queue_numbers.*', 'orders.customer_name', 'orders.license_plate')
+                ->paginate(5);
         }
     }
     public function call()
     {
         $user = Auth::user();
-        $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
-        $status_id_first = StatusUtil::sort($shop[0]->shop_id, 1);
-        $status_id_second = StatusUtil::sort($shop[0]->shop_id, 2);
+        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
 
-        $queue = Queue_number::where('is_called', false)
-        ->where('shop_id', $shop[0]->shop_id)
-        ->whereDate('created_at', Carbon::today())
-        ->orderBy('number', 'ASC')
-        ->limit(1)
-        ->get();
+        $queue = Queue_number::whereDate('created_at', Carbon::today())
+        ->where('is_called', '0')
+        ->where('shop_id', $shop->shop_id)
+        ->orderBy('created_at', 'ASC')
+        ->first();
 
         DB::beginTransaction();
         try {
-            StatusUtil::update($queue[0]->order_id, $status_id_second);
-            DB::table('queue_numbers')->where('id', $queue[0]->id)->update(['is_called' => true]);
-
+            StatusOrder::update($queue->order_id, StatusOrder::sort(2));
+            Queue_number::where('id', $queue->id)->update(['is_called'=>true]);
             DB::commit();
 
             $data = array(

@@ -15,11 +15,12 @@ use App\Util\ResponseJson;
 use App\Util\OrderUtil;
 use App\Util\Checker;
 use App\Util\Queue;
-use App\Util\StatusUtil;
+use App\Util\StatusOrder;
 use Illuminate\Support\Facades\Auth;
 use Yajra\Datatables\Datatables;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
@@ -30,17 +31,69 @@ class OrderController extends Controller
      */
     public function index()
     {
+        if(isset($_GET['status_id'])){
+            $status_id = $_GET['status_id'];
+        }else{
+            $status_id = StatusOrder::sort(2);
+        }
         if(isset($_GET['id'])){
             $id = $_GET['id'];
+            $data['status'] = Order_status::where('order_id', $id)
+            ->join('statuses', 'statuses.id', '=', 'order_statuses.status_id')
+            ->select('order_statuses.*', 'statuses.name')
+            ->latest()
+            ->first();
+            $data['order'] = Order::find($id)->first();
             $data = array(
                 'indonesia' => 'Pesanan Ditemukan',
                 'english' => 'Order Founded',
-                'data' => Order::find($id)->get(),
+                'data' => $data,
             );
             return response()->json(ResponseJson::response($data), 200);
         }else{
-            return Datatables::of(Order::with('shop'))->make(true);
+            return Order_status::where('status_id', $status_id)
+            ->where('is_active', true)
+            ->join('queue_numbers', 'queue_numbers.order_id', '=', 'order_statuses.order_id')
+            ->join('orders', 'orders.id', '=', 'order_statuses.order_id')
+            ->join('statuses', 'statuses.id', '=', 'order_statuses.status_id')
+            ->orderBy('order_statuses.created_at', 'DESC')
+            ->select('order_statuses.*', 'queue_numbers.code', 'queue_numbers.number', 'orders.customer_name', 'orders.license_plate', 'orders.grand_total', 'statuses.name as status')
+            ->paginate(5);
         }
+    }
+    public function today()
+    {
+        if(isset($_GET['status_id'])){
+            $status_id = $_GET['status_id'];
+        }else{
+            $status_id = StatusOrder::sort(2);
+        }
+        return Order_status::join('queue_numbers', 'queue_numbers.order_id', '=', 'order_statuses.order_id')
+            ->join('orders', 'orders.id', '=', 'order_statuses.order_id')
+            ->join('statuses', 'statuses.id', '=', 'order_statuses.status_id')
+            ->select('order_statuses.*', 'queue_numbers.code', 'queue_numbers.number', 'orders.customer_name', 'orders.license_plate', 'orders.grand_total', 'statuses.name as status')
+            ->whereDate('order_statuses.created_at', Carbon::today())
+            ->where('status_id', $status_id)
+            ->where('is_active', true)
+            ->latest()
+            ->paginate(5);
+    }
+    public function yesterday()
+    {
+        if(isset($_GET['status_id'])){
+            $status_id = $_GET['status_id'];
+        }else{
+            $status_id = StatusOrder::sort(2);
+        }
+        return Order_status::join('queue_numbers', 'queue_numbers.order_id', '=', 'order_statuses.order_id')
+            ->join('orders', 'orders.id', '=', 'order_statuses.order_id')
+            ->join('statuses', 'statuses.id', '=', 'order_statuses.status_id')
+            ->orderBy('order_statuses.created_at', 'DESC')
+            ->select('order_statuses.*', 'queue_numbers.code', 'queue_numbers.number', 'orders.customer_name', 'orders.license_plate', 'orders.grand_total', 'statuses.name as status')
+            ->whereDate('order_statuses.created_at', Carbon::yesterday())
+            ->where('status_id', $status_id)
+            ->where('is_active', true)
+            ->paginate(5);
     }
 
     /**
@@ -81,9 +134,20 @@ class OrderController extends Controller
             return response()->json(ResponseJson::response($check), 401);
         }
     }
+    public function update_status(Request $request)
+    {
+        $count_status = Order_status::where('order_id', $request->order_id)->count();
+        StatusOrder::update($request->order_id, StatusOrder::sort($count_status+1));
+        $data = array(
+            'indonesia' => 'Status di perbaharui',
+            'english' => 'Status has been updated',
+        );
+        return response()->json(ResponseJson::response($data), 200);
+    }
     public function store(Request $request)
     {
         $user = Auth::user();
+        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
         $check = Checker::valid($request, array('customer_name' => 'required', 'license_plate'=>'required', 'car_type_id'=>'required|numeric'));
         if($check==null){
             DB::beginTransaction();
@@ -96,8 +160,7 @@ class OrderController extends Controller
                     'other_product_name'=>$request->other_product_name,
                     'other_product_price'=>$request->other_product_price,
                 ));
-                $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
-                $status = Status::where('shop_id', '=', $shop[0]->shop_id)->where('sort', '=', 1)->get();
+                
                 $order = new Order();
                 $order->order_number = "CW-".time().rand(1000,9999);
                 $order->customer_name = ucwords($request->customer_name);
@@ -113,21 +176,22 @@ class OrderController extends Controller
                 $order->other_product_name = $request->other_product_name;
                 $order->other_product_price = $request->other_product_price;
                 $order->grand_total = $count['grand_total'];
-                $order->shop_id = $shop[0]->shop_id;
+                $order->shop_id = $shop->shop_id;
                 $order->save();
                 $order_id = $order->id;
-    
+
                 $queue = Queue::generate($shop);
                 $queue_number = new Queue_number();
                 $queue_number->code = $queue['code'];
                 $queue_number->number = $queue['number'];
-                $queue_number->shop_id = $shop[0]->shop_id;
+                $queue_number->shop_id = $shop->shop_id;
                 $queue_number->order_id = $order_id;
                 $queue_number->save();
     
+                $status = StatusOrder::sort(1);
                 $order_status = new Order_status();
                 $order_status->order_id = $order_id;
-                $order_status->status_id = $status[0]->id;
+                $order_status->status_id = $status;
                 $order_status->save();
 
                 $print = array(
@@ -159,12 +223,6 @@ class OrderController extends Controller
         }else{
             return response()->json(ResponseJson::response($check), 401);
         }
-    }
-    public function test()
-    {
-        $user = Auth::user();
-        $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
-        return Queue::generate($shop);
     }
 
     /**

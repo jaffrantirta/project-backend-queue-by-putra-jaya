@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order_status;
 use Illuminate\Http\Request;
-use App\Util\StatusUtil;
+use App\Util\StatusOrder;
 
 class OrderStatusController extends Controller
 {
@@ -36,11 +36,9 @@ class OrderStatusController extends Controller
      */
     public function store(Request $request)
     {
-        $user = Auth::user();
         $check = Checker::valid($request, array('order_id' => 'required|numeric', 'status_id'=>'required|numeric'));
         if($check==null){
-            $shop = Shop_user::with('shop')->where('user_id', $user->id)->get();
-            $status_id = StatusUtil::sort($shop[0]->shop_id, 2);
+            $status_id = StatusOrder::sort(2);
             
             $order_status = new OrderStatus();
             $order_status->order_id = $request->order_id;

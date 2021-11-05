@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Status;
+use App\Models\Shop_user;
 use Illuminate\Http\Request;
 use App\Util\ResponseJson;
 use App\Util\Checker;
@@ -18,7 +19,9 @@ class StatusController extends Controller
      */
     public function index()
     {
-        return Datatables::of(Product::all())->make(true);
+        $user = Auth::user();
+        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
+        return Status::where('shop_id', $shop->shop_id)->get();
     }
 
     /**

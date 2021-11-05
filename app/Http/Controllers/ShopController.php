@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Models\Status;
 use App\Models\Shop;
 use App\Models\Shop_user;
 use App\Models\Verify_user;
@@ -99,6 +100,17 @@ class ShopController extends Controller
             $verify_user->user_id = $user_id;
             $verify_user->token = $token;
             $verify_user->save();
+
+            $stts = ['Waiting', 'On Service', 'Finish'];
+            $sort = 1;
+            foreach($stts as $x){
+                $status = new Status();
+                $status->name = $x;
+                $status->shop_id = $shop_id;
+                $status->sort = $sort;
+                $status->save();
+                $sort++;
+            }
 
             $config = array(
                 'user_name'=>$request->user_name,
