@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QueueNumberController;
 use App\Http\Controllers\StatusController;
+use App\Http\Controllers\RoleController;
 use App\Models\Car_type;
 use Yajra\Datatables\Datatables;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ Route::post('login', [UserController::class, 'login']);
 Route::get('send_email', [ShopController::class, 'send_email']);
 Route::group(['middleware' => 'auth:api'], function(){
     Route::get('user/detail', [ShopController::class, 'register']);
-    Route::post('logout', [ShopController::class, 'register']);
+    Route::get('logout', [UserController::class, 'logout']);
 
     //car type
     Route::post('car_type/add', [CarTypeController::class, 'store']);
@@ -77,4 +78,15 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     //status
     Route::get('status',[StatusController::class, 'index']);
+
+    //profile
+    Route::post('profile/update', [UserController::class, 'profile_update']);
+    Route::post('profile/change/password', [UserController::class, 'change_password']);
+
+    //user
+    Route::post('user/add', [UserController::class, 'store']);
+    Route::get('user', [UserController::class, 'index']);
+
+    //role
+    Route::get('role', [RoleController::class, 'index']);
 });

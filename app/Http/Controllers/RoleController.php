@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\Shop_user;
 use Illuminate\Http\Request;
 
 class RoleController extends Controller
@@ -14,7 +15,19 @@ class RoleController extends Controller
      */
     public function index()
     {
-        //
+        $user = Auth::user();
+        $shop_id = Shop_user::where('user_id', $user->id)->first()->shop_id;
+        if(isset($_GET['id'])){
+            $id = $_GET['id'];
+            $data = array(
+                'indonesia' => 'Tipe Kendaraan Ditemukan',
+                'english' => 'Car Type Founded',
+                'data' => Role::find($id),
+            );
+            return response()->json(ResponseJson::response($data), 200);
+        }else{
+            return Role::where('shop_id', $shop_id)->latest()->paginate(5);
+        }
     }
 
     /**
