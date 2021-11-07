@@ -13,6 +13,7 @@ use App\Util\ResponseJson;
 use App\Util\Checker;
 use Hash;
 use Validator;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
@@ -165,9 +166,9 @@ class UserController extends Controller
         if(isset($_GET['id'])){
             $id = $_GET['id'];
             $data = array(
-                'indonesia' => 'Tipe Kendaraan Ditemukan',
-                'english' => 'Car Type Founded',
-                'data' => Role::find($id),
+                'indonesia' => 'Pengguna Ditemukan',
+                'english' => 'User Founded',
+                'data' => User::with('role')->find($id),
             );
             return response()->json(ResponseJson::response($data), 200);
         }else{
@@ -200,15 +201,11 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        $shop_id = Shop_user::where('user_id', $user_id)->first()->shop_id;
+        $shop_id = Shop_user::where('user_id', $user->id)->first()->shop_id;
         $check = Checker::valid($request, array(
-            'shop_name' => 'required',
-            'shop_address' => 'required',
-            'shop_phone' => 'required|numeric|digits:12',
-            'shop_email' => 'required|email',
-            'user_name' => 'required',
+            'name' => 'required',
             'email' => 'required|email|unique:users',
-            'user_phone' => 'required|numeric|digits:12',
+            'phone' => 'required|numeric|digits:12',
         ));
         if($check==null){
             DB::beginTransaction();
@@ -216,9 +213,9 @@ class UserController extends Controller
                 $password = rand(10000000,99999999);
                 $user = new User();
                 $user->role_id = $request->role_id;
-                $user->name = $request->user_name;
+                $user->name = $request->name;
                 $user->email = $request->email;
-                $user->phone = $request->user_phone;
+                $user->phone = $request->phone;
                 $user->password = bcrypt($password);
                 $user->save();
                 $user_id = $user->id;
@@ -235,7 +232,7 @@ class UserController extends Controller
                 $verify_user->save();
 
                 $config = array(
-                    'user_name'=>$request->user_name,
+                    'user_name'=>$request->name,
                     'email'=>$request->email,
                     'password'=>$password,
                 );

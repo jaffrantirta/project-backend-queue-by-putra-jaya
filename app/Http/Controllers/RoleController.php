@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Role;
 use App\Models\Shop_user;
 use Illuminate\Http\Request;
+use Validator;
+use App\Util\ResponseJson;
+use App\Util\Checker;
+use Illuminate\Support\Facades\Auth;
 
 class RoleController extends Controller
 {
@@ -26,7 +30,7 @@ class RoleController extends Controller
             );
             return response()->json(ResponseJson::response($data), 200);
         }else{
-            return Role::where('shop_id', $shop_id)->latest()->paginate(5);
+            return Role::orderBy('name', 'asc')->get();
         }
     }
 

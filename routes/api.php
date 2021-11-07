@@ -36,9 +36,6 @@ Route::post('register', [ShopController::class, 'store']);
 Route::post('login', [UserController::class, 'login']);
 Route::get('send_email', [ShopController::class, 'send_email']);
 Route::group(['middleware' => 'auth:api'], function(){
-    Route::get('user/detail', [ShopController::class, 'register']);
-    Route::get('logout', [UserController::class, 'logout']);
-
     //car type
     Route::post('car_type/add', [CarTypeController::class, 'store']);
     Route::post('car_type/update/{id}', [CarTypeController::class, 'update']);
@@ -86,6 +83,10 @@ Route::group(['middleware' => 'auth:api'], function(){
     //user
     Route::post('user/add', [UserController::class, 'store']);
     Route::get('user', [UserController::class, 'index']);
+    Route::get('user/detail', [ShopController::class, 'register']);
+    Route::get('logout', [UserController::class, 'logout']);
+    Route::post('user/update/{id}', [UserController::class, 'update']);
+    Route::delete('user/delete/{id}', [UserController::class, 'destroy']);
 
     //role
     Route::get('role', [RoleController::class, 'index']);
