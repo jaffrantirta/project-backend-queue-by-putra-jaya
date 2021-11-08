@@ -86,9 +86,9 @@ class UserController extends Controller
         $status = "Your e-mail is already verified. You can now login.";
         }
     } else {
-        return redirect('/login')->with('warning', "Sorry your email cannot be identified.");
+        return "Sorry your email cannot be identified.";
     }
-    return redirect('/login')->with('status', $status);
+    return $status;
     }
     public function change_password(Request $request)
     {
