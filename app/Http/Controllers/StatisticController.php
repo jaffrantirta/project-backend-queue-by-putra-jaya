@@ -37,6 +37,7 @@ class StatisticController extends Controller
         ->with('product')
         ->get();
         $i = 0;
+        $data[] = null;
         foreach($products as $x){
             $data['data'][$i] = $x->count;
             $data['lebels'][$i] = $x->product->name;
