@@ -11,6 +11,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QueueNumberController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\StatisticController;
 use App\Models\Car_type;
 use Yajra\Datatables\Datatables;
 use Illuminate\Http\Request;
@@ -90,4 +91,7 @@ Route::group(['middleware' => 'auth:api'], function(){
 
     //role
     Route::get('role', [RoleController::class, 'index']);
+
+    //statistic
+    Route::get('statistic', [StatisticController::class, 'statistic']);
 });

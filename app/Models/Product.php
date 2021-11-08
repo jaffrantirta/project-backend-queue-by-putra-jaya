@@ -12,6 +12,10 @@ class Product extends Model
     {
         return $this->hasOne(Group_product::class, 'id', 'group_product_id');
     }
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'product_id', 'id');
+    }
     protected $fillable = [
         'name', 'group_product_id', 'price'
     ];

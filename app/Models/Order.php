@@ -12,6 +12,10 @@ class Order extends Model
     {
         return $this->hasOne(Shop::class, 'id', 'shop_id');
     }
+    public function product()
+    {
+        return $this->hasOne(Product::class, 'id', 'product_id');
+    }
     public function queue_number()
     {
         return $this->belongsTo(Queue_number::class, 'order', 'id');
