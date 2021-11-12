@@ -52,8 +52,8 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
-    // 'url' => env('APP_URL', 'https://washapi.postore.my.id'),
+    // 'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'https://washapi.postore.my.id'),
 
 
     'asset_url' => env('ASSET_URL', null),

@@ -52,17 +52,23 @@ class StatisticController extends Controller
         $last_status_id = Status::where('shop_id', $shop_id)->orderBy('sort', 'desc')->first()->id;
         $data = null;
         $i = 0;
-        foreach($car_types as $car_type){
-            $data['data'][$i] = Order_status::join('orders', 'orders.id', '=', 'order_statuses.order_id')
-            ->where('orders.car_type_id', $car_type->id)
-            ->where('order_statuses.status_id', $last_status_id)
-            ->where('order_statuses.is_active', true)
-            ->whereDate('orders.created_at', Carbon::today())
-            ->count();
-            $data['lebels'][$i] = $car_type->name;
-            $i++;
+        if(count($car_types) > 0){
+            foreach($car_types as $car_type){
+                $data['data'][$i] = Order_status::join('orders', 'orders.id', '=', 'order_statuses.order_id')
+                ->where('orders.car_type_id', $car_type->id)
+                ->where('order_statuses.status_id', $last_status_id)
+                ->where('order_statuses.is_active', true)
+                ->whereDate('orders.created_at', Carbon::today())
+                ->count();
+                $data['lebels'][$i] = $car_type->name;
+                $i++;
+            }
+            return $data;
+        }else{
+            $data['data'][0] = 0;
+            $data['lebels'][0] = "";
+            return $data;
         }
-        return $data;
     }
     public function success_order_today($shop_id)
     {

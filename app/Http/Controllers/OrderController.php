@@ -272,21 +272,39 @@ class OrderController extends Controller
     public function order_preload()
     {
         $user = Auth::user();
-        $shop = Shop_user::with('shop')->where('user_id', $user->id)->first();
-        $groups = Group_product::where('shop_id', $shop->shop_id)->get();
-        $i = 0;
-        foreach($groups as $x){
-            $gp[$i] = $x;
-            $gp[$i]['products'] = Product::where('group_product_id', $x->id)->get();
-            $i++;
+        $shop_id = Shop_user::with('shop')->where('user_id', $user->id)->first()->shop_id;
+        $groups = Group_product::where('shop_id', $shop_id)->get();
+        $car_types = Car_type::where('shop_id', $shop_id)->get();
+        // return $groups;
+        if(count($groups) == 0){
+            $data = array(
+                'status' => false,
+                'indonesia' => 'Produk Belum Di-set',
+                'english' => 'Product not set yet',
+            );
+            return response()->json(ResponseJson::response($data), 404);
+        }else if(count($car_types) == 0){
+            $data = array(
+                'status' => false,
+                'indonesia' => 'Tipe Kendaraan Belum Di-set',
+                'english' => 'Car Type not set yet',
+            );
+            return response()->json(ResponseJson::response($data), 404);
+        }else{
+            $i = 0;
+            foreach($groups as $x){
+                $gp[$i] = $x;
+                $gp[$i]['products'] = Product::where('group_product_id', $x->id)->get();
+                $i++;
+            }
+            $result['group_products'] = $gp;
+            $result['car_types'] = $car_types;
+            $data = array(
+                'indonesia' => 'Semua Produk Berdasarkan Grup',
+                'english' => 'All Products Order by Group',
+                'data' => $result,
+            );
+            return response()->json(ResponseJson::response($data), 200);
         }
-        $result['group_products'] = $gp;
-        $result['car_types'] = Car_type::where('shop_id', $shop->shop_id)->get();
-        $data = array(
-            'indonesia' => 'Semua Produk Berdasarkan Grup',
-            'english' => 'All Products Order by Group',
-            'data' => $result,
-        );
-        return response()->json(ResponseJson::response($data), 200);
     }
 }
